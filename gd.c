@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include <memory.h>
 #include <math.h>
 
 /* note: use -O2 to speed up */
+
+#define VERY_SMALL_NUM 0.01
 
 static double hypothesis(int n, double *x, double *theta)
 {
@@ -23,45 +26,85 @@ void bgd(
 	double *x, /* the features */
 	double *theta /* the parameter */
 ) {
-	double allSum = 0;
+	double sum = 0;
 
 	do {
 		int i = 0;
 		int j = 0;
 
-		double sum = 0;
+		double temp = 0;
 
 		for (i = 0; i < m; ++i) {
-			sum += hypothesis(n, &(x[i * n]), theta) - y[i];
+			temp += hypothesis(n, &(x[i * n]), theta) - y[i];
 		}
 		
-		theta[n] -= alpha * sum;
-		allSum = fabs(sum);
+		theta[n] -= alpha * temp;
+		sum = fabs(temp);
 
 		for (j = 0; j < n; ++j) {
-			sum = 0;
+			temp = 0;
 			for (i = 0; i < m; ++i) {
-				sum += (hypothesis(n, &(x[i * n]), theta) - y[i]) * x[i * n + j];
+				temp += (hypothesis(n, &(x[i * n]), theta) - y[i]) * x[i * n + j];
 			}
-			theta[j] -= alpha * sum;
-			allSum += fabs(sum);
+			theta[j] -= alpha * temp;
+			sum += fabs(temp);
 		}
 #ifndef NDEBUG
-		printf("allSum %f\n", allSum);
+		printf("sum %f\n", sum);
 #endif
-	} while (allSum > 0.1);
+	} while (sum > VERY_SMALL_NUM);
+}
+
+void sgd(
+	double alpha, /* the learning rate */
+	int m, /* the size of training set*/
+	int n, /* the size of feature (dimension of x) */
+	double *y, /* the targets */
+	double *x, /* the features */
+	double *theta /* the parameter */
+) {
+	double sum = 0;
+
+	do {
+		int i = 0;
+
+		for (i = 0; i < m; ++i) {
+			int j = 0;
+			double temp = hypothesis(n, &(x[i * n]), theta) - y[i];
+
+			theta[n] -= alpha * temp;
+			sum = fabs(temp);
+
+			for (j = 0; j < n; ++j) {
+				temp = (hypothesis(n, &(x[i * n]), theta) - y[i]) * x[i * n + j];
+				theta[j] -= alpha * temp;
+				sum += fabs(temp);
+			}
+
+			if (sum <= VERY_SMALL_NUM) {
+				break;
+			}
+		}
+#ifndef NDEBUG
+		printf("sum %f\n", sum);
+#endif
+	} while (sum > VERY_SMALL_NUM);
 }
 
 #if 1
-static double prices[] = {400, 330, 369, 232, 540};
-static double features[] = {2104, 3, 1600, 3, 2400, 3, 1416, 2, 3000, 4};
-// 0.063969 103.222058 -70.043756
-static double params[3] = {0};
+static double prices[] = {1000, 3000, 5000, 7000, 9000};
+static double features[] = {0, 1, 2, 3, 4};
+static double params[2] = {0};
 
 int main (int argc, char **argv)
 {
-	bgd(0.00000008, 5, 2, prices, features, params);
-	printf("params = %f %f %f\n", params[0], params[1], params[2]);
+	bgd(0.01, 5, 1, prices, features, params);
+	printf("bgd params = %f %f\n", params[0], params[1]);
+
+	memset(params, 0, sizeof(params));
+
+	sgd(0.01, 5, 1, prices, features, params);
+	printf("sgd params = %f %f\n", params[0], params[1]);
 	return 0;
 }
 #endif
