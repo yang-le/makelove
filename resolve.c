@@ -21,7 +21,7 @@ static float test_func2(float x)
 
 static float test_func3(float x)
 {
-	return sqrt(2) * sin(x);
+	return M_SQRT2 * sin(x);
 }
 
 float resolve1(func1_t func, float a, float b, float delta)
@@ -104,6 +104,7 @@ float mse1(func1_t func, float a, float b, unsigned int n)
 	return sqrt((t0 + t1 + t2) / (3 * n));
 }
 
+#if 0
 int main(int argc, char* argv[])
 {
 	float result = resolve1(test_func1, 0, 1, 0.0001);
@@ -121,4 +122,5 @@ int main(int argc, char* argv[])
 	result = mse1(test_func0, -1, 1, 1000);
 	printf("get result %f\n", result);
 }
+#endif
 
